@@ -12,4 +12,4 @@ This script:
 2. Plots genetic associations for Fw on Chr1 and Cw on Chr2, based on prior knowledge of their genetic architecture from mapping studies.
 3. Plots the strength of association between fly attack rates and genotype across the whole genome (see panels C - E in plotGWAS_selection_example.png), and tests for overrepresentation of gene ontology categories (topGO). 
 
-Raw results files are too large to upload and will be made available upon manuscript submission.
+Raw results files are too large to upload so I have uploaded preview files including the first 10,000 lines.
