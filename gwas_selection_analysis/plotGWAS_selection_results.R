@@ -19,10 +19,10 @@ library(GenomicRanges)
 ######
 
 #read genome annotation, reformat some columns, subset genes
-tocgff<-read.table("~/Documents/StA/Sw_WGS/TOC.asm.scaffold.gene.gff3") %>% 
+tocgff<-read.table("TOC.asm.scaffold.gene.gff3") %>% 
   mutate(V1=as.integer(gsub("scaffold_","",V1)),gene=gsub("ID=.*;.*Name=","",V9)) %>% filter(V3=="gene")
 #read functional annotations
-gene_annos<-read.table("~/Documents/StA/Sw_WGS/TOC.asm.scaffold.gene.SWISSPROT.blastp.top_hit.txt")
+gene_annos<-read.table("TOC.asm.scaffold.gene.SWISSPROT.blastp.top_hit.txt")
 colnames(gene_annos)<-c("gene","score","anno")
 gene_annos$gene<-gsub("\\.t.*","",gene_annos$gene)#remove transcript ID
 
@@ -85,7 +85,7 @@ cust.theme<-function(){
 ######
 
 #read subset of association test results, keep only Chr2
-All.Cw<-read.table("~/Documents/StA/popgen/gwas/All_Cw_lmm.assoc_P0.1.txt",h=T) %>% filter(chr==2)
+All.Cw<-read.table("All_Cw_lmm.assoc_P0.1.txt",h=T) %>% filter(chr==2)
 #annotate sig. SNPs
 All.Cw$sig<-All.Cw$padj<0.05
 All.Cw<-annotation_function(All.Cw)
@@ -109,8 +109,8 @@ rm(list="All.Cw")#remove from environment to save memory
 ######
 
 #read subset of association test results for each pop, keep only Chr1
-kauai.fw<-read.table("~/Documents/StA/popgen/gwas/Kauai_Fw.assoc_P0.1.txt",h=T) %>% filter(chr=="scaffold_1") %>% mutate(chr=1)
-oahu.fw<-read.table("~/Documents/StA/popgen/gwas/Oahu_Fw.assoc_P0.1.txt",h=T) %>% filter(chr=="scaffold_1") %>% mutate(chr=1)
+kauai.fw<-read.table("Kauai_Fw.assoc_P0.1.txt",h=T) %>% filter(chr=="scaffold_1") %>% mutate(chr=1)
+oahu.fw<-read.table("Oahu_Fw.assoc_P0.1.txt",h=T) %>% filter(chr=="scaffold_1") %>% mutate(chr=1)
 #hilo.fw<-read.table("Hawaii_Fw.assoc_P0.1.txt",h=T) %>% filter(chr=="scaffold_1") #excl. as too few Fw samples
 
 #store positions of top variants for plotting
@@ -148,7 +148,7 @@ rm(list="All.Fw")
 #selection results (LFMM of genotype ~ fly attack rate)
 ######
 
-flysel<-read.csv("~/Documents/StA/popgen/gwas/LFMM_results.csv",h=T) %>% mutate(p_lrt=P)
+flysel<-read.csv("LFMM_results.csv",h=T) %>% mutate(p_lrt=P)
 flysel$sig<-flysel$p_lrt<quantile(flysel$p_lrt,0.0001)
 
 #add gene info 
