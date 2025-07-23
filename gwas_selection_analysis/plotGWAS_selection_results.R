@@ -90,12 +90,12 @@ All.Cw<-read.table("All_Cw_lmm.assoc_P0.1.txt",h=T) %>% filter(chr==2)
 All.Cw$sig<-All.Cw$padj<0.05
 All.Cw<-annotation_function(All.Cw)
 
-All.Cw.plot<-ggplot(All.Cw,aes(x=ps,y=(-log10(p_lrt)),colour=sig))+
-  cust.theme()+
+All.Cw.plot<-ggplot(All.Cw,aes(x=ps/1e+6,y=(-log10(p_lrt)),colour=sig))+
+  xlab("Chr2 pos. Mb")+cust.theme()+
   geom_point(size=0.5,alpha=1)+
   #plot gene annotations for SNPs that are significant and within 50kb of genes
   geom_text_repel(data=All.Cw[All.Cw$sig & All.Cw$within50kb,],
-                  aes(x=ps,y=(-log10(p_lrt)),label=anno),
+                  aes(x=ps/1e+6,y=(-log10(p_lrt)),label=anno),
                   min.segment.length=0.0001,size=2.5,
                   nudge_x=0,nudge_y=1.5,fontface="italic",alpha=1)+
   scale_colour_manual(values=c("#d4cdcd","#8f3131"))+
@@ -139,7 +139,7 @@ All.Fw.plot<-ggplot(All.Fw,aes(x=ps/1e+6,y=(-log10(p_lrt)),colour=sig))+facet_gr
   geom_text_repel(data=All.Fw[!is.na(All.Fw$sig)  & All.Fw$within50kb,],
                   aes(x=ps/1e+6,y=(-log10(p_lrt)),label=anno),colour='black',max.overlaps=10,
                   min.segment.length=0.0001,size=2,nudge_x=0,nudge_y=1.5,fontface="italic",alpha=1)+
-  scale_colour_manual(values=c("#00c08b","#c77cff","#d4cdcd"))+
+  scale_colour_manual(values=c("#00c08b","#c77cff"),na.value="#d4cdcd")+
   ggtitle("Flatwing")+ylab("-log10(P)")+
   scale_y_continuous(expand=c(0,0))#+coord_cartesian(xlim=(c(250,260)))
 
@@ -164,7 +164,7 @@ fly.sel.plot<-ggplot(flysel,aes(x=ps,y=(-log10(P)),colour=sig))+
   geom_text_repel(data=flysel[flysel$sig & flysel$within50kb,],aes(x=ps,y=(-log10(P)),label=anno),
                   min.segment.length=0.0001,size=2,nudge_x=0,nudge_y=1.5,
                   fontface="italic",alpha=1,max.overlaps=10)+
-  cust.theme()+theme(axis.text.x=element_blank())+
+  cust.theme()+theme(axis.text.x=element_blank(),axis.title.x=element_blank())+
   facet_grid(.~chr,space='free',scales='free',switch='both')+
   geom_point(size=0.5,alpha=1)+
   scale_colour_manual(values=c("#d4cdcd","#8f3131"))+
@@ -172,8 +172,8 @@ fly.sel.plot<-ggplot(flysel,aes(x=ps,y=(-log10(P)),colour=sig))+
   scale_y_continuous(expand=c(0,0),limits=c(0,7.3))
 
 ggsave('fw_cw_fly.png',dpi=600,height=6,width=8.5,
-       plot=(All.Fw.plot.zoomed+labs(tag="C")+All.Cw.plot.zoomed+labs(tag="D"))/
-         fly.sel.plot+labs(tag="E")+plot_layout(nrow=3))
+       plot=(All.Fw.plot+labs(tag="C")+All.Cw.plot+labs(tag="D"))/
+         fly.sel.plot+labs(tag="E")+plot_layout(nrow=2))
 
 
 #now test overrepresentation of gene ontology categories among selection outliers
