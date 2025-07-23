@@ -86,6 +86,7 @@ cust.theme<-function(){
 
 #read subset of association test results, keep only Chr2 as previous work indicated the major effect locus is in this region
 All.Cw<-read.table("All_Cw_lmm.assoc_P0.1.txt",h=T) %>% filter(chr==2)
+topcw<-All.Cw[order(All.Cw$p_lrt),][1,]$ps #store position of top variants for plotting
 #annotate sig. SNPs
 All.Cw$sig<-All.Cw$padj<0.05
 All.Cw<-annotation_function(All.Cw)
@@ -158,8 +159,10 @@ flysel$sig<-flysel$p_lrt<quantile(flysel$p_lrt,0.0001)
 flysel<-annotation_function(flysel)
 
 fly.sel.plot<-ggplot(flysel,aes(x=ps,y=(-log10(P)),colour=sig))+
+  #add vertical lines in locations of top fw (kauai/oahu) and cw variants
   geom_vline(data=data.frame(chr=1),aes(xintercept=topfw.kauai),linetype='dashed',linewidth=0.35,colour='#00c08b')+
   geom_vline(data=data.frame(chr=1),aes(xintercept=topfw.oahu),linetype='dashed',linewidth=0.35,colour='#c77cff')+
+  geom_vline(data=data.frame(chr=2),aes(xintercept=topcw),linetype='dashed',linewidth=0.35,colour='black')+
   #plot gene annotations for SNPs that are outliers and within 50kb of genes
   geom_text_repel(data=flysel[flysel$sig & flysel$within50kb,],aes(x=ps,y=(-log10(P)),label=anno),
                   min.segment.length=0.0001,size=2,nudge_x=0,nudge_y=1.5,
