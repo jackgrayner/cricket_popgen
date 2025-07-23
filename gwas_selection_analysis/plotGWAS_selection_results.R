@@ -27,7 +27,7 @@ colnames(gene_annos)<-c("gene","score","anno")
 gene_annos$gene<-gsub("\\.t.*","",gene_annos$gene)#remove transcript ID
 
 #keep top hit per gene
-gene_annos<-gene_annos[order(gene_annos$score,decreasing = TRUE),] %>% filter(!duplicated(gene_annos))
+gene_annos<-gene_annos[order(gene_annos$score,decreasing=TRUE),] %>% filter(!duplicated(gene_annos))
 
 #remove accession info and spp ID from annotations for readability, then merge genome and functional annotation data frames
 gene_annos$anno<-gsub(".*\\|","",gene_annos$anno)
@@ -37,8 +37,8 @@ tocgff.anno<-merge(tocgff,gene_annos,by='gene')
 #create granges object
 genes<-GRanges(seqnames=tocgff.anno$V1,#chr/scaffolds
   ranges=IRanges(start=tocgff.anno$V4, end=tocgff.anno$V5))#start and end of gene feature
-mcols(genes)$gene <- tocgff.anno$gene#add gene ID (e.g., TOC.11T.00352)
-mcols(genes)$anno <- tocgff.anno$anno#add annotation (eg., UBCD1)
+mcols(genes)$gene<-tocgff.anno$gene#add gene ID (e.g., TOC.11T.00352)
+mcols(genes)$anno<-tocgff.anno$anno#add annotation (eg., UBCD1)
 
 window=50000 #50kb window used to identify nearby genes
 #find nearby genes for sig. variants, output sig. vars with genes & annotations
@@ -66,7 +66,7 @@ annotation_function<-function(df){
   df$gene<-mcols(nearest_genes)$gene
   df$anno<-mcols(nearest_genes)$anno
   df$dist<-distances
-  #note whether dist is < 50Kb
+  #note whether dist is < window (50Kb)
   df$within50kb<-df$dist<window
   return(df)
 }
@@ -84,7 +84,7 @@ cust.theme<-function(){
 #curly-wing GWAS - plot (only Chr2)
 ######
 
-#read subset of association test results, keep only Chr2
+#read subset of association test results, keep only Chr2 as previous work indicated the major effect locus is in this region
 All.Cw<-read.table("All_Cw_lmm.assoc_P0.1.txt",h=T) %>% filter(chr==2)
 #annotate sig. SNPs
 All.Cw$sig<-All.Cw$padj<0.05
@@ -96,8 +96,8 @@ All.Cw.plot<-ggplot(All.Cw,aes(x=ps,y=(-log10(p_lrt)),colour=sig))+
   #plot gene annotations for SNPs that are significant and within 50kb of genes
   geom_text_repel(data=All.Cw[All.Cw$sig & All.Cw$within50kb,],
                   aes(x=ps,y=(-log10(p_lrt)),label=anno),
-                  min.segment.length = 0.0001,size=2.5,
-                  nudge_x = 0,nudge_y = 1.5,fontface = "italic",alpha=1)+
+                  min.segment.length=0.0001,size=2.5,
+                  nudge_x=0,nudge_y=1.5,fontface="italic",alpha=1)+
   scale_colour_manual(values=c("#d4cdcd","#8f3131"))+
   ggtitle("Curly-wing")+ylab("-log10(P)")+
   scale_y_continuous(expand=c(0,0))
@@ -108,7 +108,8 @@ rm(list="All.Cw")#remove from environment to save memory
 #flatwing GWAS - plot (only Chr1)
 ######
 
-#read subset of association test results for each pop, keep only Chr1
+#read subset of association test results for each pop, keep only Chr1 as previous work indicated the major effect loci are in this region
+#nb. Kauai and Oahu association tests are run separately as prior work suggests independent Fw-causing mutations have spread on each island
 kauai.fw<-read.table("Kauai_Fw.assoc_P0.1.txt",h=T) %>% filter(chr=="scaffold_1") %>% mutate(chr=1)
 oahu.fw<-read.table("Oahu_Fw.assoc_P0.1.txt",h=T) %>% filter(chr=="scaffold_1") %>% mutate(chr=1)
 #hilo.fw<-read.table("Hawaii_Fw.assoc_P0.1.txt",h=T) %>% filter(chr=="scaffold_1") #excl. as too few Fw samples
@@ -136,8 +137,8 @@ All.Fw.plot<-ggplot(All.Fw,aes(x=ps/1e+6,y=(-log10(p_lrt)),colour=sig))+facet_gr
   geom_point(size=0.5,alpha=1)+
   #plot gene annotations for SNPs that are significant and within 50kb of genes
   geom_text_repel(data=All.Fw[!is.na(All.Fw$sig)  & All.Fw$within50kb,],
-                  aes(x=ps/1e+6,y=(-log10(p_lrt)),label=anno),colour='black',max.overlaps = 10,
-                  min.segment.length = 0.0001,size=2,nudge_x = 0,nudge_y = 1.5,fontface = "italic",alpha=1)+
+                  aes(x=ps/1e+6,y=(-log10(p_lrt)),label=anno),colour='black',max.overlaps=10,
+                  min.segment.length=0.0001,size=2,nudge_x=0,nudge_y=1.5,fontface="italic",alpha=1)+
   scale_colour_manual(values=c("#00c08b","#c77cff","#d4cdcd"))+
   ggtitle("Flatwing")+ylab("-log10(P)")+
   scale_y_continuous(expand=c(0,0))#+coord_cartesian(xlim=(c(250,260)))
@@ -149,6 +150,8 @@ rm(list="All.Fw")
 ######
 
 flysel<-read.csv("LFMM_results.csv",h=T) %>% mutate(p_lrt=P)
+summary(flysel$padj<0.05)
+#just one variant is significant at P < 0.05 after correcting for multiple tests, so we will instead investigate 0.01% outliers
 flysel$sig<-flysel$p_lrt<quantile(flysel$p_lrt,0.0001)
 
 #add gene info 
@@ -159,8 +162,8 @@ fly.sel.plot<-ggplot(flysel,aes(x=ps,y=(-log10(P)),colour=sig))+
   geom_vline(data=data.frame(chr=1),aes(xintercept=topfw.oahu),linetype='dashed',linewidth=0.35,colour='#c77cff')+
   #plot gene annotations for SNPs that are outliers and within 50kb of genes
   geom_text_repel(data=flysel[flysel$sig & flysel$within50kb,],aes(x=ps,y=(-log10(P)),label=anno),
-                  min.segment.length = 0.0001,size=2,nudge_x = 0,nudge_y = 1.5,
-                  fontface = "italic",alpha=1,max.overlaps = 10)+
+                  min.segment.length=0.0001,size=2,nudge_x=0,nudge_y=1.5,
+                  fontface="italic",alpha=1,max.overlaps=10)+
   cust.theme()+theme(axis.text.x=element_blank())+
   facet_grid(.~chr,space='free',scales='free',switch='both')+
   geom_point(size=0.5,alpha=1)+
@@ -183,48 +186,48 @@ colnames(gaf)<-c("gene_ID","go_terms")
 #using topGO functions
 
 #create named list of P-values (names=gene IDs)
-gene_list <- flysel$p_lrt
-names(gene_list) <- flysel$gene
-gene_list <- gene_list[!is.na(gene_list)]
+gene_list<-flysel$p_lrt
+names(gene_list)<-flysel$gene
+gene_list<-gene_list[!is.na(gene_list)]
 
 #define function for genes of interest (0.01 percentile P outliers)
-selection_function <- function(x) {
+selection_function<-function(x) {
   return(x < quantile(flysel$P,0.0001))
 }
 
 #create list
-gene2GO <- list()
+gene2GO<-list()
 for(i in 1:nrow(gaf)){
   #for each gene with GO annotations, split them by ; character, then create list (GOs per gene)
   if(!is.na(gaf[i,]$go_terms) & !gaf[i,]$go_terms=="") {
-    go_list <- (unlist(strsplit(gaf[i,]$go_terms,";")))
-    gene2GO[[gaf[i,]$gene_ID]] <- go_list
+    go_list<-(unlist(strsplit(gaf[i,]$go_terms,";")))
+    gene2GO[[gaf[i,]$gene_ID]]<-go_list
   }
 }
 
 #create topGO gene ontology objects
-GOdata_BP <-  new("topGOdata",
-                  ontology = "BP",#biological process
-                  allGenes = gene_list,#full list of genes with GO terms
-                  geneSel = selection_function,#define outliers
-                  annot = annFUN.gene2GO,
-                  gene2GO = gene2GO)
-GOdata_MF <- new("topGOdata",
-                 ontology = "MF",#molecular function
-                 allGenes = gene_list,#full list of genes with GO terms
-                 geneSel = selection_function,#define outliers
-                 annot = annFUN.gene2GO,
-                 gene2GO = gene2GO)
+GOdata_BP<- new("topGOdata",
+                  ontology="BP",#biological process
+                  allGenes=gene_list,#full list of genes with GO terms
+                  geneSel=selection_function,#define outliers
+                  annot=annFUN.gene2GO,
+                  gene2GO=gene2GO)
+GOdata_MF<-new("topGOdata",
+                 ontology="MF",#molecular function
+                 allGenes=gene_list,#full list of genes with GO terms
+                 geneSel=selection_function,#define outliers
+                 annot=annFUN.gene2GO,
+                 gene2GO=gene2GO)
 
 #run Fisher's exact tests
-test_BP <- runTest(GOdata_BP, statistic = "fisher")
-test_MF <- runTest(GOdata_MF, statistic = "fisher")
+test_BP<-runTest(GOdata_BP, statistic="fisher")
+test_MF<-runTest(GOdata_MF, statistic="fisher")
 #generate results tables
-results_BP <- GenTable(GOdata_BP, Fisher = test_BP, topNodes = 100) %>% mutate(Category="Biological Process")
-results_MF <- GenTable(GOdata_MF, Fisher = test_MF, topNodes = 100) %>% mutate(Category="Molecular Function")
+results_BP<-GenTable(GOdata_BP, Fisher=test_BP, topNodes=100) %>% mutate(Category="Biological Process")
+results_MF<-GenTable(GOdata_MF, Fisher=test_MF, topNodes=100) %>% mutate(Category="Molecular Function")
 
 #concatenate BP and MF results, then subset terms with P < 0.01 and more than 1 outlier
-all_results <- rbind(results_BP, results_MF)
+all_results<-rbind(results_BP, results_MF)
 all_results$Fisher<-as.numeric(all_results$Fisher)
 all_results<-all_results[all_results$Fisher<0.01 & all_results$Significant>1,]
 View(all_results)
