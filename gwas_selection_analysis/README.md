@@ -10,6 +10,6 @@ Reads in a ped/map file and a csv file with the predictor variable (fly attack r
 This script:
 1. Reads in the results files from the above analyses, and identifies overlapping and nearby genes.
 2. Plots genetic associations for Fw on Chr1 and Cw on Chr2, based on prior knowledge of their genetic architecture from mapping studies.
-3. Plots the strength of association between fly attack rates and genotype across the whole genome and tests for overrepresentation of gene ontology categories (topGO).
+3. Plots the strength of association between fly attack rates and genotype across the whole genome (see panels C - E in plotGWAS_selection_example.png), and tests for overrepresentation of gene ontology categories (topGO). 
 
 Raw results files are too large to upload and will be made available upon manuscript submission.
