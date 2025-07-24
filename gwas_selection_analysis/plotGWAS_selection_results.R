@@ -96,7 +96,7 @@ All.Cw.plot<-ggplot(All.Cw,aes(x=ps/1e+6,y=(-log10(p_lrt)),colour=sig))+
   geom_point(size=0.5,alpha=1)+
   #plot gene annotations for SNPs that are significant and within 50kb of genes
   geom_text_repel(data=All.Cw[All.Cw$sig & All.Cw$within50kb,],
-                  aes(x=ps/1e+6,y=(-log10(p_lrt)),label=anno),
+                  aes(x=ps/1e+6,y=(-log10(p_lrt)),label=anno),colour='black',
                   min.segment.length=0.0001,size=2.5,
                   nudge_x=0,nudge_y=1.5,fontface="italic",alpha=1)+
   scale_colour_manual(values=c("#d4cdcd","#8f3131"))+
