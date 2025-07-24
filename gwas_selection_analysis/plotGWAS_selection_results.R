@@ -192,6 +192,9 @@ colnames(gaf)<-c("gene_ID","go_terms")
 gene_list<-flysel$p_lrt
 names(gene_list)<-flysel$gene
 gene_list<-gene_list[!is.na(gene_list)]
+#keep one (most sig.) variant per gene
+gene_list<-gene_list[order(gene_list)]
+gene_list<-gene_list[!duplicated(names(gene_list))]
 
 #define function for genes of interest (0.01 percentile P outliers)
 selection_function<-function(x) {
