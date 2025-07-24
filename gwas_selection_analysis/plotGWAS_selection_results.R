@@ -91,11 +91,16 @@ topcw<-All.Cw[order(All.Cw$p_lrt),][1,]$ps #store position of top variants for p
 All.Cw$sig<-All.Cw$padj<0.05
 All.Cw<-annotation_function(All.Cw)
 
+#create labelled gene set.
+cw.labels<-All.Cw[All.Cw$sig  & All.Cw$within50kb,]
+cw.labels<-cw.labels[order(cw.labels$p_lrt),]
+cw.labels<-cw.labels[!duplicated(cw.labels$anno),]
+
 All.Cw.plot<-ggplot(All.Cw,aes(x=ps/1e+6,y=(-log10(p_lrt)),colour=sig))+
   xlab("Chr2 pos. Mb")+cust.theme()+
   geom_point(size=0.5,alpha=1)+
   #plot gene annotations for SNPs that are significant and within 50kb of genes
-  geom_text_repel(data=All.Cw[All.Cw$sig & All.Cw$within50kb,],
+  geom_text_repel(data=cw.labels,
                   aes(x=ps/1e+6,y=(-log10(p_lrt)),label=anno),colour='black',
                   min.segment.length=0.0001,size=2.5,
                   nudge_x=0,nudge_y=1.5,fontface="italic",alpha=1)+
@@ -111,8 +116,8 @@ rm(list="All.Cw")#remove from environment to save memory
 
 #read subset of association test results for each pop, keep only Chr1 as previous work indicated the major effect loci are in this region
 #nb. Kauai and Oahu association tests are run separately as prior work suggests independent Fw-causing mutations have spread on each island
-kauai.fw<-read.table("Kauai_Fw.assoc_P0.1.txt",h=T) %>% filter(chr=="scaffold_1") %>% mutate(chr=1)
-oahu.fw<-read.table("Oahu_Fw.assoc_P0.1.txt",h=T) %>% filter(chr=="scaffold_1") %>% mutate(chr=1)
+kauai.fw<-read.table("Kauai_Fw.assoc_P0.1.txt",h=T) %>% filter(chr=="scaffold_1") %>% mutate(chr=1,sig=Padj<0.05)
+oahu.fw<-read.table("Oahu_Fw.assoc_P0.1.txt",h=T) %>% filter(chr=="scaffold_1") %>% mutate(chr=1,sig=Padj<0.05)
 #hilo.fw<-read.table("Hawaii_Fw.assoc_P0.1.txt",h=T) %>% filter(chr=="scaffold_1") #excl. as too few Fw samples
 
 #store positions of top variants for plotting
@@ -122,6 +127,15 @@ topfw.oahu<-oahu.fw[order(oahu.fw$p_lrt),][1,]$ps
 #add annotations
 kauai.fw<-annotation_function(kauai.fw)
 oahu.fw<-annotation_function(oahu.fw)
+
+#create labelled gene set. remove duplicated genes independently 
+kauai.fw.labels<-kauai.fw[kauai.fw$sig  & kauai.fw$within50kb,]
+kauai.fw.labels<-kauai.fw.labels[order(kauai.fw.labels$p_lrt),]
+kauai.fw.labels<-kauai.fw.labels[!duplicated(kauai.fw.labels$anno),]
+oahu.fw.labels<-oahu.fw[oahu.fw$sig  & oahu.fw$within50kb,]
+oahu.fw.labels<-oahu.fw.labels[order(oahu.fw.labels$p_lrt),]
+oahu.fw.labels<-oahu.fw.labels[!duplicated(oahu.fw.labels$anno),]
+fw.labels<-rbind(kauai.fw.labels,oahu.fw.labels)
 
 #concatenate
 All.Fw<-rbind(kauai.fw,oahu.fw)
@@ -137,7 +151,7 @@ All.Fw.plot<-ggplot(All.Fw,aes(x=ps/1e+6,y=(-log10(p_lrt)),colour=sig))+facet_gr
   geom_vline(xintercept=253.6,linetype='dashed',linewidth=0.25,colour='black')+#add dsx location
   geom_point(size=0.5,alpha=1)+
   #plot gene annotations for SNPs that are significant and within 50kb of genes
-  geom_text_repel(data=All.Fw[!is.na(All.Fw$sig)  & All.Fw$within50kb,],
+  geom_text_repel(data=fw.labels,
                   aes(x=ps/1e+6,y=(-log10(p_lrt)),label=anno),colour='black',max.overlaps=10,
                   min.segment.length=0.0001,size=2,nudge_x=0,nudge_y=1.5,fontface="italic",alpha=1)+
   scale_colour_manual(values=c("#00c08b","#c77cff"),na.value="#d4cdcd")+
@@ -155,7 +169,7 @@ summary(flysel$padj<0.05)
 #just one variant is significant at P < 0.05 after correcting for multiple tests, so we will instead investigate 0.01% outliers
 flysel$sig<-flysel$p_lrt<quantile(flysel$p_lrt,0.0001)
 
-#add gene info 
+#add gene info. LFMM  was run on pruned dataset so don't need to remove duplicate annotations from labels.
 flysel<-annotation_function(flysel)
 
 fly.sel.plot<-ggplot(flysel,aes(x=ps,y=(-log10(P)),colour=sig))+
