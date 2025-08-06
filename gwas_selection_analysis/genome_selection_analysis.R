@@ -4,6 +4,7 @@ library(LEA)
 kval <- commandArgs(trailingOnly=TRUE)[1]#read kval from command line
 
 #convert ped file to LFMM format
+#input file - ped file pruned using plink's --indep-pairwise 50kb 1 0.1
 ped2lfmm("../allpops_nodupes_filtered_pruned.ped", 
          output.file = "allpops_nodupes_filtered_pruned.lfmm", force = TRUE)
 Y<-read.lfmm('allpops_nodupes_filtered_pruned.lfmm')
