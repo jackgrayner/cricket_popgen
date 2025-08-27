@@ -29,44 +29,44 @@ flies[flies$flies_caught>0,]$fly.yn<-1
 
 #now estimate relative fitness of silent males
 
-#1. take mean flies attracted per song trap
-flies.sum<-flies %>% filter(playback=='song' & time_postsunset<120) %>% 
-  group_by(site,island) %>% 
-  dplyr::summarise(meanflies=mean(flies_caught),meanfly.yn=mean(fly.yn))
+#take mean flies attracted per song trap
+flies.sum.night<-flies %>% filter(playback=='song' & time_postsunset<120) %>% 
+  group_by(site,island,date,wtnwpres) %>% 
+  dplyr::summarise(meanflies=mean(flies_caught),fly.yn=mean(fly.yn))
 
-#2. what is the chance of attracting a fly relative to a normal-wing male?
+#that's for 10 mins (Pten). crickets sing for 7.63 mins (Pfly)
+#'expected arrivals' per 7.63 minutes is
+Nten = flies.sum.night$meanflies
+Nfly = Nten^0.76
 
-# what is average number of flies a nw male attracts on a given night?
-# Assume based on rayner et al. 2020 that crix sing of 7.63 mins per night. 
-# This is consistent with other estimates but I would guess is conservative
-# (observed under semi-stressful conditions - see paper).
-flies.sum$num.night<-flies.sum$meanflies*0.763
+#probability of  being infected per night is...
+#(only 61% of attacks end in infestation)
+Pinf = 1 - (1 - 0.61)^(0.76*Nfly)
 
-# Thomson et al. 2012 paper states that in G. texensis, 0.61 of larvae successfully emerge from targeted crickets
-# Adamo et al. find infested crickets may continue to reproduce normally for ~5 days after infestation...
-# and die after 7-10d. So let's assume they're not reproductively viable at 6 days
+#PInf = 1 - exp(-0.61*Nfly)
+est_lifespan = 1/Pinf + 6
+est_lifespan[est_lifespan>29]<-29
+flies.sum.night$lifeexpectency<-est_lifespan
 
-# each night the probability of being infested is 0.61 * mean flies captured per 7.63mins
-# reproductive lifespan is expected time til infestation + 6d
-flies.sum$lifeexpectancy<-(1/(flies.sum$num.night*0.61))+6
-
-#impose same ceiling for longevity on nw males as fw males (i.e., typical lifespan=29d in absence of fly)
-flies.sum[flies.sum$lifeexpectancy>29,]$lifeexpectancy<-29
-mean(flies.sum$lifeexpectancy)
-sd(flies.sum$lifeexpectancy)/sqrt(nrow(flies.sum))
-
-#rel fitness of nw males is est. reproductively viability div. by that of silent males
-NS_relfitness_nw<-mean(flies.sum$lifeexpectancy)/29
+NS_relfitness_nw<-(flies.sum.night$lifeexpectency)/29
 SS_relfitness_nw<-1.391#sexual selection estimate from Tanner 2019
 NS_relfitness_nw*SS_relfitness_nw # = net rel. fitness of singing Nw males
-
-#reverse for silent males
-NS_relfitness_fw<-29/(flies.sum$lifeexpectancy)
-mean(NS_relfitness_fw)
-sd(NS_relfitness_fw)/sqrt(nrow(flies.sum))
+NS_relfitness_fw<-29/(flies.sum.night$lifeexpectency)
 SS_relfitness_fw<-(1-0.391)#Sexual selection estimate taken from Tanner 2019
-mean(NS_relfitness_fw*SS_relfitness_fw)
-sd(NS_relfitness_fw*SS_relfitness_fw)/sqrt(nrow(flies.sum))
+flies.sum.night$fw.rel.fitness<-NS_relfitness_fw*SS_relfitness_fw # = net rel. fitness of Fw males
+
+g.silent<-ggplot(flies.sum.night,aes(x=site,y=NS_relfitness_fw,colour=island,group=date))+
+  geom_hline(yintercept=1,linetype='dashed')+
+  theme_bw()+theme(panel.grid=element_blank(),axis.text.x=element_text(angle=45,hjust=1,vjust=1),
+                   axis.title.x=element_blank(),
+                   strip.background=element_rect(fill='#eeeeee'))+
+  facet_grid(.~wtnwpres,scales='free',space='free')+geom_quasirandom(alpha=0.75,width=0.1)+
+  ylab("Rel. fitness of silent males under fly selection")+
+  stat_summary(aes(group=site,fill=island),colour='#555555',shape=21,linewidth=0.5)+
+  scale_colour_manual(values=c("#f8766d","#00c08b","#c77cff"))+
+  scale_fill_manual(values=c("#f8766d","#00c08b","#c77cff"))#+scale_y_continuous(limits=seq(0,1))
+
+ggsave("~/Documents/StA/popgen/flytrapping/rel_fitness.png",plot=g.silent1,dpi=600,height=3,width=5.25)
 
 #plot num. of flies caught over time, with lines coloured by island
 g.time<-ggplot(flies,aes(x=time_postsunset,y=flies_caught))+
@@ -76,11 +76,6 @@ g.time<-ggplot(flies,aes(x=time_postsunset,y=flies_caught))+
   geom_smooth(method='loess',span=1,colour='black',alpha=1,fill='#cccccc',size=1.5)+
   ylab("Flies caught per trap")+xlab('Mins. post-sunset')+
   scale_colour_manual(values=c("#f8766d","#00c08b","#c77cff"))
-
-#now do the same but averaged per night (rather than per site)
-flies.sum.night<-flies %>% filter(playback=='song' & time_postsunset<120) %>% 
-  group_by(site,island,date,wtnwpres) %>% 
-  dplyr::summarise(meanflies=mean(flies_caught),fly.yn=mean(fly.yn))
 
 #calculate repeatability of mean likelihood of attracting a fly (Y/N) across sites 
 rep1<-rpt(formula=(log(fly.yn+1)~(1|site)),grname="site",data=data.frame(flies.sum.night),datatype = "Gaussian")
@@ -95,29 +90,6 @@ plot(rep1)
 glm2<-lm(log(fly.yn+1)~island/site,data=data.frame(flies.sum.night))
 anova(glm2)
 plot(glm2)
-
-#repeat rel. fitness calculation per night (instead of per site) -- see above for rationale
-flies.sum.night$num.night<-flies.sum.night$meanflies*0.763
-flies.sum.night$lifeexpectancy<-(1/(flies.sum.night$num.night*0.61))+6
-flies.sum.night[flies.sum.night$lifeexpectancy>29,]$lifeexpectancy<-29
-NS_relfitness_nw<-mean(flies.sum.night$lifeexpectancy)/29
-SS_relfitness_nw<-1.391#sexual selection estimate from Tanner 2019
-NS_relfitness_nw*SS_relfitness_nw # = net rel. fitness of singing Nw males
-NS_relfitness_fw<-29/(flies.sum.night$lifeexpectancy)
-SS_relfitness_fw<-(1-0.391)#Sexual selection estimate taken from Tanner 2019
-
-g.silent<-ggplot(flies.sum.night,aes(x=site,y=NS_relfitness_fw,colour=island,group=date))+
-  geom_hline(yintercept=1,linetype='dashed')+
-  theme_bw()+theme(panel.grid=element_blank(),axis.text.x=element_text(angle=45,hjust=1,vjust=1),
-                   axis.title.x=element_blank(),
-                   strip.background=element_rect(fill='#eeeeee'))+
-  facet_grid(.~wtnwpres,scales='free',space='free')+geom_quasirandom(alpha=0.75,width=0.1)+
-  ylab("Rel. fitness of silent males under fly selection")+
-  stat_summary(aes(group=site,fill=island),colour='#555555',shape=21,linewidth=0.5)+
-  scale_colour_manual(values=c("#f8766d","#00c08b","#c77cff"))+
-  scale_fill_manual(values=c("#f8766d","#00c08b","#c77cff"))#+scale_y_continuous(limits=seq(0,1))
-
-ggsave("~/Documents/StA/popgen/flytrapping/rel_fitness.png",plot=g.silent1,dpi=600,height=3,width=5.25)
 
 
 #### investigate influence of rain and temperature
