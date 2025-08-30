@@ -167,9 +167,8 @@ rm(list="All.Fw")
 flysel<-read.csv("LFMM_results.csv",h=T) %>% mutate(p_lrt=P)
 summary(flysel$padj<0.05)
 #just one variant is significant at P < 0.05 after correcting for multiple tests, so we will instead investigate 0.01% outliers
-flysel$sig<-flysel$p_lrt<quantile(flysel$p_lrt,0.0001)
+flysel$sig <- flysel$padj<0.05
 
-#add gene info. LFMM  was run on pruned dataset so don't need to remove duplicate annotations from labels.
 flysel<-annotation_function(flysel)
 
 fly.sel.plot<-ggplot(flysel,aes(x=ps,y=(-log10(P)),colour=sig))+
