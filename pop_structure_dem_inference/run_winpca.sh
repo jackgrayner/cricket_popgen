@@ -45,7 +45,7 @@ for chr1 in {1..14}
 do
 	chr=scaffold_${chr1}
 	end=$(grep -w ${chr} ~/scratch/Toc_genome_v3/TOC.asm.scaffold.fasta.fai | awk '{print $2}')
-	winpca pca -s keep_merged_samples.txt -p guide_samples -g 74-M133 -w 10000000 -i 100000 --np -v GT merged_${chr} ../RAD_WGS_merged_filt.vcf.gz $chr:1-$end
-	winpca chromplot -m pop_aus_HI.txt -g population merged_$chr $chr:1-$end -i 10
+	ref_sample=$(head -n ${chr1} ref_samples.txt| tail -n 1 )
+	~/scratch/RAD_Toc_Aus/genomev3/reads/aln/winpca/winpca/winpca pca -s keep_merged_samples.txt -p guide_samples -g ${ref_sample} -w 10000000 -i 100000 --np -v GT merged_${chr} ../RAD_WGS_merged_filt.vcf.gz $chr:1-$end
+	~/scratch/RAD_Toc_Aus/genomev3/reads/aln/winpca/winpca/winpca chromplot -m pop_aus_HI.txt -g population merged_$chr $chr:1-$end -i 10
 done
-
