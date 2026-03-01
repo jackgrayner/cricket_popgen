@@ -1,4 +1,24 @@
 #!/bin/bash
+#SBATCH --job-name=makebed
+#SBATCH --export=ALL
+#SBATCH --mem=32G
+#SBATCH --cpus-per-task=8
+#SBATCH --partition=long
+#SBATCH --output=makebed.log
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=jackgrayner@gmail.com
+
+#source activate plink2
+vcf_file=~/projects/uosa/Nathan_Bailey/Jack_Rayner/popgen/allpops_outgroup_nodupes_filtered.vcf.gz
+plink --vcf ${vcf_file} --chr scaffold_5 scaffold_9 scaffold_14 --keep keep.txt --snps-only --geno 0.1 --make-bed  --allow-extra-chr --out all_filtered_chr5_9_14
+
+for pop in Kauai.PK Kauai.VL Kauai.AS Kauai.CG Kauai.WC Hilo.CL Hilo.UH Oahu.BYU Oahu.CC Oahu.KP
+do
+ sbatch ./gone2.sh ${pop} .
+done
+
+
+#!/bin/bash
 #SBATCH --job-name=gone2
 #SBATCH --export=ALL
 #SBATCH --mem=32G
